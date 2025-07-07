@@ -11,6 +11,11 @@
             // Check if ACF input script is loaded
             if (typeof acf !== 'undefined' && typeof acf.do_action !== 'undefined') {
                 console.log('Tribe ACF Frontend: ACF input script is loaded.');
+
+                // Manually trigger ACF actions to prepare and submit fields
+                acf.do_action('prepare_fields', $communityEventsForm);
+                acf.do_action('submit', $communityEventsForm);
+
             } else {
                 console.log('Tribe ACF Frontend: ACF input script is NOT loaded.');
             }
