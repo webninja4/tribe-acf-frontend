@@ -166,10 +166,9 @@ class Tribe_ACF_Frontend {
 
         // Check if ACF has data to save for this post.
         if ( ! empty( $_POST['acf'] ) ) {
-            error_log( 'Tribe ACF Frontend: $_POST[\''acf\'] is NOT empty. Data: ' . var_export( $_POST['acf'], true ) );
-            acf_form_submit( $post_id );
+            error_log( 'Tribe ACF Frontend: $_POST['acf'] is NOT empty.' );            error_log( var_export( $_POST['acf'], true ) );            acf_form_submit( $post_id );
         } else {
-            error_log( 'Tribe ACF Frontend: $_POST[\''acf\'] IS empty.' );
+            error_log( 'Tribe ACF Frontend: $_POST['acf'] IS empty.' );
         }
     }
 }
