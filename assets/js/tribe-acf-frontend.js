@@ -7,6 +7,13 @@
         if ($communityEventsForm.length) {
             $communityEventsForm.addClass('acf-form');
             console.log('Tribe ACF Frontend: Added acf-form class to the Community Events form.');
+
+            // Check if ACF input script is loaded
+            if (typeof acf !== 'undefined' && typeof acf.do_action !== 'undefined') {
+                console.log('Tribe ACF Frontend: ACF input script is loaded.');
+            } else {
+                console.log('Tribe ACF Frontend: ACF input script is NOT loaded.');
+            }
         }
     });
 })(jQuery);
