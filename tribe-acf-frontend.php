@@ -138,6 +138,7 @@ class Tribe_ACF_Frontend {
             $fields = acf_get_fields( $group_key );
             if ( $fields ) {
                 foreach ( $fields as $field ) {
+                    error_log( 'Tribe ACF Frontend: Rendering field: ' . var_export( $field, true ) );
                     acf_render_field( $field );
                 }
             }
