@@ -133,7 +133,10 @@ class Tribe_ACF_Frontend {
         );
 
         // Output the ACF form.
-        acf_form_data();
+        acf_form_data( array( 
+            'screen_id' => 'community_event',
+            'post_id'   => $post_id,
+        ) );
         acf_form( $acf_settings );
     }
 
