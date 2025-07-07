@@ -172,7 +172,7 @@ class Tribe_ACF_Frontend {
             // ACF should automatically save fields if the field group is assigned to the post type.
             // We are not calling acf_form_submit() here as Community Events handles its own form submission.
         } else {
-            error_log( 'Tribe ACF Frontend: $_POST[\''acf\'] IS empty.' );
+            error_log( "Tribe ACF Frontend: $_POST['acf'] IS empty." );
         }
     }
 }
