@@ -137,6 +137,15 @@ class Tribe_ACF_Frontend {
             'screen_id' => 'community_event',
             'post_id'   => $post_id,
         ) );
+
+        // Manually output hidden fields for ACF to pick up.
+        $fields = acf_get_fields( 'group_60f8e0d7b3d7e' ); // Replace with your ACF field group key
+        if ( $fields ) {
+            foreach ( $fields as $field ) {
+                acf_hidden_input( array( 'name' => 'acf[' . $field['key'] . ']', 'value' => get_field( $field['key'], $post_id ) ) );
+            }
+        }
+
         acf_form( $acf_settings );
     }
 
