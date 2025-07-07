@@ -88,8 +88,7 @@ class Tribe_ACF_Frontend {
     /**
      * Output ACF fields on the frontend submission form.
      */
-    public function output_acf_fields() {
-        error_log( 'Tribe ACF Frontend: output_acf_fields function called with correct hook.' );
+    public function output_acf_fields( $tribe_event_id = null ) {
         // Ensure ACF is active and we are on the frontend.
         if ( ! class_exists( 'ACF' ) || is_admin() ) {
             return;
@@ -97,19 +96,12 @@ class Tribe_ACF_Frontend {
 
         $post_id = 'new_post'; // Default for new events.
 
-        // Check if we are editing an existing event.
-        if ( isset( $_GET['event_id'] ) && ! empty( $_GET['event_id'] ) ) {
-            $event_id = absint( $_GET['event_id'] );
-            if ( get_post_type( $event_id ) === Tribe__Events__Main::POSTTYPE ) {
-                $post_id = $event_id;
-            }
-        } elseif ( isset( $_POST['post_ID'] ) && ! empty( $_POST['post_ID'] ) ) {
-            // Fallback for when the form is submitted (e.g., validation errors).
-            $event_id = absint( $_POST['post_ID'] );
-            if ( get_post_type( $event_id ) === Tribe__Events__Main::POSTTYPE ) {
-                $post_id = $event_id;
-            }
+        // If an event ID is provided, use it.
+        if ( ! empty( $tribe_event_id ) ) {
+            $post_id = $tribe_event_id;
         }
+
+        error_log( 'Tribe ACF Frontend: output_acf_fields function called. Current post_id: ' . $post_id );
 
         // Define ACF form settings.
         $acf_settings = array(
@@ -124,13 +116,45 @@ class Tribe_ACF_Frontend {
         );
 
         // Output the ACF form.
-        error_log( 'Tribe ACF Frontend: Calling acf_form() with post_id: ' . $post_id );
         acf_form( $acf_settings );
+    }
+
+    /**
+     * Save ACF fields when a Community Event is saved or updated.
+     *
+     * @param int $post_id The ID of the event post.
+     */
+    public function save_acf_fields( $post_id ) {
+        // Ensure ACF is active and we are on the frontend.
+        if ( ! class_exists( 'ACF' ) || is_admin() ) {
+            return;
+        }
+
+        // Check if this is an autosave or a revision.
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+        if ( wp_is_post_revision( $post_id ) ) {
+            return;
+        }
+
+        // Check if the current user has permission to edit the post.
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+
+        // Check if ACF has data to save for this post.
+        if ( ! empty( $_POST['acf'] ) ) {
+            acf_form_submit( $post_id );
+        }
     }
 }
 
 // Initialize the plugin.
-new Tribe_ACF_Frontend();
+$tribe_acf_frontend = new Tribe_ACF_Frontend();
+
+// Hook the save function.
+add_action( 'tribe_community_event_save_updated', array( $tribe_acf_frontend, 'save_acf_fields' ) );
 
 /*
  * Template Override Instructions:
