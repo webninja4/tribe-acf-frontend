@@ -37,7 +37,7 @@ class Tribe_ACF_Frontend {
      */
     public function enqueue_scripts() {
         // Only enqueue on the frontend Community Events submission page.
-        if ( ! is_admin() && function_exists( 'tribe_is_community_events_edit_page' ) && tribe_is_community_events_edit_page() ) {
+        if ( ! is_admin() && did_action( 'tribe_events_community_form_before_template' ) ) {
             wp_enqueue_script(
                 'tribe-acf-frontend-script',
                 plugin_dir_url( __FILE__ ) . 'assets/js/tribe-acf-frontend.js',
