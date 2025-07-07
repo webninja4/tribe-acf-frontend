@@ -132,12 +132,16 @@ class Tribe_ACF_Frontend {
             'updated_message' => __( 'Event updated.', 'tribe-acf-frontend' ), // This won't be used as 'form' is false.
         );
 
-        // Output the ACF form.
-        acf_form_data( array( 
-            'screen_id' => 'community_event',
-            'post_id'   => $post_id,
-        ) );
-        acf_form( $acf_settings );
+        // Output the ACF fields manually.
+        $field_group_keys = array( 'group_684c75eccf51f', 'group_684b6ab1de8fa' );
+        foreach ( $field_group_keys as $group_key ) {
+            $fields = acf_get_fields( $group_key );
+            if ( $fields ) {
+                foreach ( $fields as $field ) {
+                    acf_render_field( $field );
+                }
+            }
+        }
     }
 
     /**
