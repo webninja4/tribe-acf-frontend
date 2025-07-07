@@ -28,7 +28,24 @@ class Tribe_ACF_Frontend {
     public function __construct() {
         add_action( 'plugins_loaded', array( $this, 'check_dependencies' ) );
         add_action( 'init', array( $this, 'init_acf_form_head' ) );
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
         add_action( 'tribe_events_community_form_before_template', array( $this, 'output_acf_fields' ) );
+    }
+
+    /**
+     * Enqueue custom scripts.
+     */
+    public function enqueue_scripts() {
+        // Only enqueue on the frontend Community Events submission page.
+        if ( ! is_admin() && function_exists( 'tribe_is_community_events_edit_page' ) && tribe_is_community_events_edit_page() ) {
+            wp_enqueue_script(
+                'tribe-acf-frontend-script',
+                plugin_dir_url( __FILE__ ) . 'assets/js/tribe-acf-frontend.js',
+                array( 'jquery', 'acf-input' ),
+                filemtime( plugin_dir_path( __FILE__ ) . 'assets/js/tribe-acf-frontend.js' ),
+                true
+            );
+        }
     }
 
     /**
@@ -116,6 +133,10 @@ class Tribe_ACF_Frontend {
         );
 
         // Output the ACF form.
+        acf_form_data( array( 
+            'screen_id' => 'community_event',
+            'post_id'   => $post_id,
+        ) );
         acf_form( $acf_settings );
     }
 
