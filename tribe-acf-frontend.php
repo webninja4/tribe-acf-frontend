@@ -133,22 +133,7 @@ class Tribe_ACF_Frontend {
         );
 
         // Output the ACF form.
-        acf_form_data( array( 
-            'screen_id' => 'community_event',
-            'post_id'   => $post_id,
-        ) );
-
-        // Manually output hidden fields for ACF to pick up.
-        $field_group_keys = array( 'group_684c75eccf51f', 'group_684b6ab1de8fa' );
-        foreach ( $field_group_keys as $group_key ) {
-            $fields = acf_get_fields( $group_key );
-            if ( $fields ) {
-                foreach ( $fields as $field ) {
-                    acf_hidden_input( array( 'name' => 'acf[' . $field['key'] . ']', 'value' => get_field( $field['key'], $post_id ) ) );
-                }
-            }
-        }
-
+        acf_form_data();
         acf_form( $acf_settings );
     }
 
@@ -178,9 +163,13 @@ class Tribe_ACF_Frontend {
 
         // Check if ACF has data to save for this post.
         if ( ! empty( $_POST['acf'] ) ) {
-            acf_form_submit( $post_id );
+            error_log( 'Tribe ACF Frontend: $_POST[\'acf\'] is NOT empty. Manually saving fields.' );
+            foreach ( $_POST['acf'] as $field_key => $value ) {
+                update_field( $field_key, $value, $post_id );
+                error_log( 'Tribe ACF Frontend: Saved field ' . $field_key . ' with value ' . var_export( $value, true ) );
+            }
         } else {
-            // No ACF data in POST.
+            error_log( 'Tribe ACF Frontend: $_POST[\'acf\'] IS empty.' );
         }
     }
 }
