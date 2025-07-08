@@ -27,25 +27,8 @@ class Tribe_ACF_Frontend {
      */
     public function __construct() {
         add_action( 'plugins_loaded', array( $this, 'check_dependencies' ) );
-        add_action( 'init', array( $this, 'init_acf_form_head' ) );
-        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+        add_action( 'wp_head', array( $this, 'init_acf_form_head' ) );
         add_action( 'tribe_events_community_form_before_template', array( $this, 'output_acf_fields' ) );
-    }
-
-    /**
-     * Enqueue custom scripts.
-     */
-    public function enqueue_scripts() {
-        // Only enqueue on the frontend Community Events submission page.
-        if ( ! is_admin() && did_action( 'tribe_events_community_form_before_template' ) ) {
-            wp_enqueue_script(
-                'tribe-acf-frontend-script',
-                plugin_dir_url( __FILE__ ) . 'assets/js/tribe-acf-frontend.js',
-                array( 'jquery', 'acf-input' ),
-                filemtime( plugin_dir_path( __FILE__ ) . 'assets/js/tribe-acf-frontend.js' ),
-                true
-            );
-        }
     }
 
     /**
@@ -120,6 +103,8 @@ class Tribe_ACF_Frontend {
 
         error_log( 'Tribe ACF Frontend: output_acf_fields function called. Current post_id: ' . $post_id );
 
+        acf_form_data(array('post_id' => $post_id));
+
         // Define ACF form settings.
         $acf_settings = array(
             'post_id'       => $post_id,
@@ -132,17 +117,8 @@ class Tribe_ACF_Frontend {
             'updated_message' => __( 'Event updated.', 'tribe-acf-frontend' ), // This won't be used as 'form' is false.
         );
 
-        // Output the ACF fields manually.
-        $field_group_keys = array( 'group_684c75eccf51f', 'group_684b6ab1de8fa' );
-        foreach ( $field_group_keys as $group_key ) {
-            $fields = acf_get_fields( $group_key );
-            if ( $fields ) {
-                foreach ( $fields as $field ) {
-                    error_log( 'Tribe ACF Frontend: Rendering field: ' . var_export( $field, true ) );
-                    acf_render_field( $field );
-                }
-            }
-        }
+        // Output the ACF form.
+        acf_form( $acf_settings );
     }
 
     /**
@@ -171,13 +147,7 @@ class Tribe_ACF_Frontend {
 
         // Check if ACF has data to save for this post.
         if ( ! empty( $_POST['acf'] ) ) {
-            error_log( 'Tribe ACF Frontend: $_POST[\'acf\'] is NOT empty. Manually saving fields.' );
-            foreach ( $_POST['acf'] as $field_key => $value ) {
-                update_field( $field_key, $value, $post_id );
-                error_log( 'Tribe ACF Frontend: Saved field ' . $field_key . ' with value ' . var_export( $value, true ) );
-            }
-        } else {
-            error_log( 'Tribe ACF Frontend: $_POST[\'acf\'] IS empty.' );
+            acf_form_submit( $post_id );
         }
     }
 }
