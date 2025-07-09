@@ -170,14 +170,22 @@ class Tribe_ACF_Frontend {
             return;
         }
 
-        // Save ACF fields. acf_save_post() will use the $_POST['acf'] data.
-        if ( acf_save_post( $post_id ) ) {
+        // Save ACF fields first
+        $acf_saved = acf_save_post( $post_id );
+        
+        // Then save the main event data by mimicking Tribe's form submission
+        if ($acf_saved) {
+            // Get the Community Events instance and process the form
+            $community_events = Tribe__Events__Community__Main::instance();
+            $community_events->doSubmit();
+            
             wp_send_json_success( array( 
-                'message' => 'ACF fields saved successfully.'
+                'message' => 'Event saved successfully.',
+                'redirect_url' => get_permalink($post_id)
             ) );
-        } else {
-            wp_send_json_error( array( 'message' => 'Failed to save ACF fields.' ) );
         }
+        
+        wp_send_json_error( array( 'message' => 'Failed to save event data.' ) );
     }
 }
 

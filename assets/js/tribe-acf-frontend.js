@@ -97,8 +97,13 @@ jQuery(document).ready(function($) {
                     // Re-enable button and allow original form submission
                     $form.find('input[type="submit"]').prop('disabled', false);
                     
-                    // Allow the original form submission to complete
-                    $form.off('submit', handleFormSubmit).submit();
+                    // Re-enable button and allow original form submission
+                    $form.find('input[type="submit"]').prop('disabled', false);
+                    
+                    // Create clone without our submit handler and submit
+                    const newForm = $form.clone(true, true);
+                    newForm.off('submit', handleFormSubmit);
+                    newForm.submit();
                 } else {
                     console.error('Tribe ACF Frontend AJAX: Error -', response.data.message);
                     alert('Error saving custom fields: ' + response.data.message);
