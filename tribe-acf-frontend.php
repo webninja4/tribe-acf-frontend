@@ -28,7 +28,23 @@ class Tribe_ACF_Frontend {
     public function __construct() {
         add_action( 'plugins_loaded', array( $this, 'check_dependencies' ) );
         add_action( 'wp_head', array( $this, 'init_acf_form_head' ) );
-        add_action( 'tribe_events_community_form_before_template', array( $this, 'output_acf_fields' ) );
+        add_action( 'tribe_events_community_form_after_template', array( $this, 'output_acf_fields' ) );
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+    }
+
+    /**
+     * Enqueue scripts and styles.
+     */
+    public function enqueue_scripts() {
+        if ( is_singular( 'tribe_events' ) || ( function_exists( 'tribe_is_community_edit_event_page' ) && tribe_is_community_edit_event_page() ) ) {
+            wp_enqueue_script(
+                'tribe-acf-frontend-js',
+                plugins_url( 'assets/js/tribe-acf-frontend.js', __FILE__ ),
+                array( 'jquery', 'acf-input' ),
+                null,
+                true
+            );
+        }
     }
 
     /**
@@ -79,6 +95,7 @@ class Tribe_ACF_Frontend {
      * Call acf_form_head() early.
      */
     public function init_acf_form_head() {
+        error_log( 'Tribe ACF Frontend: init_acf_form_head called.' );
         // Only run on the frontend and if ACF is active.
         if ( ! is_admin() && class_exists( 'ACF' ) ) {
             acf_form_head();
@@ -89,6 +106,7 @@ class Tribe_ACF_Frontend {
      * Output ACF fields on the frontend submission form.
      */
     public function output_acf_fields( $tribe_event_id = null ) {
+        error_log( 'Tribe ACF Frontend: output_acf_fields called.' );
         // Ensure ACF is active and we are on the frontend.
         if ( ! class_exists( 'ACF' ) || is_admin() ) {
             return;
@@ -103,8 +121,6 @@ class Tribe_ACF_Frontend {
 
         error_log( 'Tribe ACF Frontend: output_acf_fields function called. Current post_id: ' . $post_id );
 
-        acf_form_data(array('post_id' => $post_id));
-
         // Define ACF form settings.
         $acf_settings = array(
             'post_id'       => $post_id,
@@ -117,37 +133,40 @@ class Tribe_ACF_Frontend {
             'updated_message' => __( 'Event updated.', 'tribe-acf-frontend' ), // This won't be used as 'form' is false.
         );
 
-        // Output the ACF form.
+        // Output the ACF form, wrapped for JS targeting.
+        echo '<div id="tribe-acf-fields-wrapper" style="display:none;">';
         acf_form( $acf_settings );
+        echo '</div>';
     }
 
     /**
-     * Save ACF fields when a Community Event is saved or updated.
-     *
-     * @param int $post_id The ID of the event post.
+     * AJAX handler for saving ACF fields.
      */
-    public function save_acf_fields( $post_id ) {
-        // Ensure ACF is active and we are on the frontend.
-        if ( ! class_exists( 'ACF' ) || is_admin() ) {
+    public function ajax_save_acf_community_event() {
+        // Verify nonce for security.
+        check_ajax_referer( 'acf_nonce' );
+
+        // Get post ID.
+        $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+
+        if ( empty( $post_id ) ) {
+            wp_send_json_error( array( 'message' => 'Missing post ID.' ) );
+        }
+
+        // Check for ACF data.
+        if ( empty( $_POST['acf'] ) ) {
+            // If the form is submitted but no ACF data is present, it might not be an error.
+            // For example, if all ACF fields are optional and none are filled out.
+            // We can consider this a success and let the main form submission proceed.
+            wp_send_json_success( array( 'message' => 'No ACF data to save.' ) );
             return;
         }
 
-        // Check if this is an autosave or a revision.
-        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-            return;
-        }
-        if ( wp_is_post_revision( $post_id ) ) {
-            return;
-        }
-
-        // Check if the current user has permission to edit the post.
-        if ( ! current_user_can( 'edit_post', $post_id ) ) {
-            return;
-        }
-
-        // Check if ACF has data to save for this post.
-        if ( ! empty( $_POST['acf'] ) ) {
-            acf_form_submit( $post_id );
+        // Save ACF fields. acf_save_post() will use the $_POST['acf'] data.
+        if ( acf_save_post( $post_id ) ) {
+            wp_send_json_success( array( 'message' => 'ACF fields saved successfully.' ) );
+        } else {
+            wp_send_json_error( array( 'message' => 'Failed to save ACF fields.' ) );
         }
     }
 }
@@ -155,8 +174,9 @@ class Tribe_ACF_Frontend {
 // Initialize the plugin.
 $tribe_acf_frontend = new Tribe_ACF_Frontend();
 
-// Hook the save function.
-add_action( 'tribe_community_event_save_updated', array( $tribe_acf_frontend, 'save_acf_fields' ) );
+// Add AJAX actions for saving ACF fields.
+add_action( 'wp_ajax_save_acf_community_event', array( $tribe_acf_frontend, 'ajax_save_acf_community_event' ) );
+add_action( 'wp_ajax_nopriv_save_acf_community_event', array( $tribe_acf_frontend, 'ajax_save_acf_community_event' ) );
 
 /*
  * Template Override Instructions:
