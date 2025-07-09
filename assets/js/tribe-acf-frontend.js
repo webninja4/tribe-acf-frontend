@@ -94,7 +94,12 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     console.log('Tribe ACF Frontend AJAX: Success -', response.data.message);
                     // Submit the main form
-                    $form.off('submit').submit();
+                    // Create and trigger a native submit event to bypass jQuery handlers
+                    const submitEvent = new Event('submit', {
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    $form[0].dispatchEvent(submitEvent);
                 } else {
                     console.error('Tribe ACF Frontend AJAX: Error -', response.data.message);
                     alert('Error saving custom fields: ' + response.data.message);
