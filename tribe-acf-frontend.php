@@ -164,20 +164,16 @@ class Tribe_ACF_Frontend {
             wp_send_json_error( array( 'message' => 'Missing post ID.' ) );
         }
 
-        // Check for ACF data.
+        // Check for required ACF data
         if ( empty( $_POST['acf'] ) ) {
-            // If the form is submitted but no ACF data is present, it might not be an error.
-            // For example, if all ACF fields are optional and none are filled out.
-            // We can consider this a success and let the main form submission proceed.
-            wp_send_json_success( array( 'message' => 'No ACF data to save.' ) );
+            wp_send_json_error( array( 'message' => 'Missing required event details.' ) );
             return;
         }
 
         // Save ACF fields. acf_save_post() will use the $_POST['acf'] data.
         if ( acf_save_post( $post_id ) ) {
             wp_send_json_success( array( 
-                'message' => 'ACF fields saved successfully.',
-                'redirect_url' => tribe_community_events_events_list_url()
+                'message' => 'ACF fields saved successfully.'
             ) );
         } else {
             wp_send_json_error( array( 'message' => 'Failed to save ACF fields.' ) );
