@@ -94,10 +94,10 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     console.log('Tribe ACF Frontend AJAX: Success -', response.data.message);
                     // Submit the main form
-                    // Remove our submit handler and submit normally
-                    $form.off('submit', handleFormSubmit);
+                    // Re-enable button and allow original form submission
+                    $form.find('input[type="submit"]').prop('disabled', false);
                     
-                    // Use native form submission instead of AJAX
+                    // Submit the form normally without AJAX
                     $form[0].submit();
                 } else {
                     console.error('Tribe ACF Frontend AJAX: Error -', response.data.message);
