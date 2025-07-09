@@ -50,7 +50,7 @@ class Tribe_ACF_Frontend {
                 'tribe_acf_frontend_ajax',
                 array( 
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
-                    'redirect_url' => tribe_community_events_events_list_url()
+                    'redirect_url' => function_exists('tribe_community_events_events_list_url') ? tribe_community_events_events_list_url() : ''
                 )
             );
         }
