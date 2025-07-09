@@ -94,8 +94,11 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     console.log('Tribe ACF Frontend AJAX: Success -', response.data.message);
                     // Submit the main form
-                    // Redirect to member events list after successful submission
-                    window.location.replace(tribe_community_events_ajax.redirect_url);
+                    // Re-enable button and allow original form submission
+                    $form.find('input[type="submit"]').prop('disabled', false);
+                    
+                    // Submit the form normally without AJAX
+                    $form[0].submit();
                 } else {
                     console.error('Tribe ACF Frontend AJAX: Error -', response.data.message);
                     alert('Error saving custom fields: ' + response.data.message);

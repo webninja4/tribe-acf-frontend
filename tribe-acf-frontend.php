@@ -135,7 +135,7 @@ class Tribe_ACF_Frontend {
             'post_id'       => $post_id,
             'field_groups'  => array(), // ACF will automatically detect field groups assigned to 'tribe_events'.
             'form'          => false,   // Do not wrap in a <form> tag, as Community Events provides its own.
-            'return'        => tribe_community_events_events_list_url(), // Redirect to the member events list after submission
+            'return'        => '', // Let Tribe handle the redirect naturally
             'html_before_fields' => '',
             'html_after_fields'  => '',
             'submit_value'  => __( 'Update Event', 'tribe-acf-frontend' ), // This won't be used as 'form' is false.
