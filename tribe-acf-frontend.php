@@ -149,8 +149,10 @@ class Tribe_ACF_Frontend {
      * AJAX handler for saving ACF fields.
      */
     public function ajax_save_acf_community_event() {
-        // Verify nonce for security.
-        check_ajax_referer( 'acf_nonce' );
+        // Verify nonce for security - match the ACF frontend form nonce name
+        if (!check_ajax_referer( 'acf_nonce', '_wpnonce', false )) {
+            wp_send_json_error( array( 'message' => 'Security verification failed.' ) );
+        }
 
         // Get post ID.
         $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
