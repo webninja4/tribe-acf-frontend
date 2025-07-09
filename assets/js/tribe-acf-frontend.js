@@ -59,7 +59,7 @@ jQuery(document).ready(function($) {
         // Serialize the ACF fields data
         const acfData = $acfWrapper.find('input, select, textarea').serialize();
         const postId = $form.find('#post_ID').val();
-        const nonce = $acfWrapper.find('input[name="acf_nonce"]').val(); // Match ACF's nonce name
+        const nonce = $acfWrapper.find('input[name="_acf_nonce"]').val(); // Match ACF's actual nonce field name
 
         if (!nonce) {
             console.error('Tribe ACF Frontend SUBMIT: Security nonce missing. Aborting.');

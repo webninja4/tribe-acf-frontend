@@ -150,7 +150,7 @@ class Tribe_ACF_Frontend {
      */
     public function ajax_save_acf_community_event() {
         // Verify nonce for security - match the ACF frontend form nonce name
-        if (!check_ajax_referer( 'acf_nonce', '_wpnonce', false )) {
+        if (!check_ajax_referer( 'acf_nonce', '_acf_nonce', false )) {
             wp_send_json_error( array( 'message' => 'Security verification failed.' ) );
         }
 
