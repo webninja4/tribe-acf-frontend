@@ -2,41 +2,52 @@ jQuery(document).ready(function($) {
     console.log('Tribe ACF Frontend INIT: Script loaded.');
 
     const acfWrapperId = '#tribe-acf-fields-wrapper';
-    const tribeFormSelector = 'form[name="tribe-community-event"]';
-    let attempts = 0;
-    const maxAttempts = 50; // ~10 seconds
+    const tribeFormSelector = '.tribe-community-events form'; // Using a class-based selector
 
-    function initializeAcfIntegration() {
-        attempts++;
-        const $acfWrapper = $(acfWrapperId);
-        const $tribeForm = $(tribeFormSelector);
+    const $acfWrapper = $(acfWrapperId);
 
-        console.log(`Tribe ACF Frontend INIT: Attempt ${attempts}. Wrapper found: ${$acfWrapper.length > 0}. Form found: ${$tribeForm.length > 0}.`);
-
-        if ($acfWrapper.length && $tribeForm.length) {
-            console.log('Tribe ACF Frontend INIT: Both ACF wrapper and Tribe form found.');
-            
-            // Move ACF fields into the Tribe form
-            $tribeForm.find('.tribe-events-community-footer').before($acfWrapper);
-            $acfWrapper.show(); // Make the fields visible
-            console.log('Tribe ACF Frontend INIT: ACF fields moved and shown.');
-
-            // Re-initialize ACF JavaScript
-            if (typeof acf !== 'undefined') {
-                acf.do_action('append', $acfWrapper);
-                console.log('Tribe ACF Frontend INIT: ACF re-initialized.');
-            }
-
-            // Attach the submit handler
-            $tribeForm.on('submit', handleFormSubmit);
-            console.log('Tribe ACF Frontend INIT: Submit handler attached.');
-
-        } else if (attempts < maxAttempts) {
-            setTimeout(initializeAcfIntegration, 200); // Check again shortly
-        } else {
-            console.error('Tribe ACF Frontend INIT: Timed out waiting for ACF wrapper or Tribe form.');
-        }
+    if (!$acfWrapper.length) {
+        console.error('Tribe ACF Frontend INIT: ACF wrapper not found on page load. Aborting.');
+        return;
     }
+
+    // Function to perform the integration
+    function integrateAcfFields(targetForm) {
+        const $tribeForm = $(targetForm);
+        console.log('Tribe ACF Frontend INIT: Tribe form found. Integrating ACF fields.');
+
+        // Move ACF fields into the Tribe form
+        $tribeForm.find('.tribe-events-community-footer').before($acfWrapper);
+        $acfWrapper.show(); // Make the fields visible
+        console.log('Tribe ACF Frontend INIT: ACF fields moved and shown.');
+
+        // Re-initialize ACF JavaScript
+        if (typeof acf !== 'undefined') {
+            acf.do_action('append', $acfWrapper);
+            console.log('Tribe ACF Frontend INIT: ACF re-initialized.');
+        }
+
+        // Attach the submit handler
+        $tribeForm.on('submit', handleFormSubmit);
+        console.log('Tribe ACF Frontend INIT: Submit handler attached.');
+    }
+
+    // Use MutationObserver to wait for the form to appear
+    const observer = new MutationObserver(function(mutations, me) {
+        const $form = $(tribeFormSelector);
+        if ($form.length) {
+            integrateAcfFields($form[0]);
+            me.disconnect(); // Stop observing once the form is found
+        }
+    });
+
+    // Start observing the body for changes
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    console.log('Tribe ACF Frontend INIT: MutationObserver is now watching for the form.');
 
     function handleFormSubmit(e) {
         e.preventDefault();
@@ -48,7 +59,7 @@ jQuery(document).ready(function($) {
         // Serialize the ACF fields data
         const acfData = $acfWrapper.find('input, select, textarea').serialize();
         const postId = $form.find('#post_ID').val();
-        const nonce = $acfWrapper.find('#_wpnonce').val(); // Get nonce from the hidden field
+        const nonce = $acfWrapper.find('input[name="_wpnonce"]').val(); // More robust nonce selector
 
         if (!acfData) {
             console.log('Tribe ACF Frontend SUBMIT: No ACF data found to submit. Submitting main form.');
@@ -57,6 +68,7 @@ jQuery(document).ready(function($) {
         }
 
         console.log('Tribe ACF Frontend SUBMIT: Post ID:', postId);
+        console.log('Tribe ACF Frontend SUBMIT: Nonce:', nonce);
         console.log('Tribe ACF Frontend SUBMIT: Serialized ACF Data:', acfData);
 
         const data = 'action=save_acf_community_event' +
@@ -65,7 +77,7 @@ jQuery(document).ready(function($) {
                      '&' + acfData;
 
         $.ajax({
-            url: ajaxurl,
+            url: tribe_acf_frontend_ajax.ajax_url, // Use localized ajax URL
             type: 'POST',
             data: data,
             dataType: 'json',
@@ -89,7 +101,4 @@ jQuery(document).ready(function($) {
             }
         });
     }
-
-    // Start the process
-    initializeAcfIntegration();
 });

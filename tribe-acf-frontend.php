@@ -28,7 +28,7 @@ class Tribe_ACF_Frontend {
     public function __construct() {
         add_action( 'plugins_loaded', array( $this, 'check_dependencies' ) );
         add_action( 'wp_head', array( $this, 'init_acf_form_head' ) );
-        add_action( 'tribe_events_community_form_after_template', array( $this, 'output_acf_fields' ) );
+        add_action( 'tribe_events_community_form_before_template', array( $this, 'output_acf_fields' ) );
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
     }
 
@@ -43,6 +43,12 @@ class Tribe_ACF_Frontend {
                 array( 'jquery', 'acf-input' ),
                 null,
                 true
+            );
+
+            wp_localize_script(
+                'tribe-acf-frontend-js',
+                'tribe_acf_frontend_ajax',
+                array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
             );
         }
     }

@@ -44,65 +44,39 @@ This document outlines the development plan and key decisions for the Tribe ACF 
 The current strategy focuses on a robust AJAX-based solution to integrate ACF fields into the Community Events form.
 
 *   **PHP (`tribe-acf-frontend.php`):**
-    *   Hook `init_acf_form_head` to `wp_head` to ensure ACF scripts and styles are loaded correctly and early.
-    *   Hook `output_acf_fields` to `tribe_events_community_form_after_template`.
-    *   In `output_acf_fields`, wrap the `acf_form()` output in a `<div id="tribe-acf-fields-wrapper" style="display:none;">` to allow JavaScript to reliably target the fields and prevent a flash of unstyled content.
-    *   Implement a single, clean AJAX handler `ajax_save_acf_community_event` that:
-        *   Verifies the ACF nonce.
-        *   Uses `acf_save_post()` without a second parameter, allowing it to automatically use the serialized `$_POST['acf']` data.
-    *   Remove the redundant `save_acf_fields` hook to prevent conflicts.
+    *   Hook `init_acf_form_head` to `wp_head` to ensure ACF scripts and styles are loaded correctly.
+    *   Hook `output_acf_fields` to `tribe_events_community_form_before_template` to ensure the fields are available before the form is fully rendered.
+    *   In `output_acf_fields`, wrap the `acf_form()` output in a hidden div for JS targeting.
+    *   Use `wp_localize_script` in the `enqueue_scripts` function to safely pass the `admin-ajax.php` URL to the frontend script, preventing 403 errors.
+    *   Implement a clean AJAX handler (`ajax_save_acf_community_event`) that verifies the ACF nonce and uses `acf_save_post()`.
 
-*   **JavaScript (`assets/js/tribe-acf-frontend-init.js`):**
-    *   Use a polling mechanism (`setTimeout`) to reliably wait for both the `#tribe-acf-fields-wrapper` and the main Tribe Events form (`form[name="tribe-community-event"]`) to be present in the DOM.
-    *   Once found, move the ACF wrapper into the main form and make it visible.
-    *   Trigger `acf.do_action('append', ...)` to re-initialize all ACF field JavaScript (e.g., Select2, date pickers).
-    *   Intercept the main form's `submit` event.
-    *   Use jQuery's `.serialize()` method on the ACF wrapper to collect all field data reliably.
-    *   Send the serialized data, along with the post ID and nonce, to the custom AJAX endpoint.
-    *   On a successful AJAX response, programmatically re-submit the main Tribe Events form.
+*   **JavaScript (`assets/js/tribe-acf-frontend.js`):**
+    *   Use a `MutationObserver` to reliably wait for the Tribe form (identified by `.tribe-community-events form`) to be added to the DOM.
+    *   Once the form is found, move the ACF wrapper into it, make it visible, and re-initialize ACF's JavaScript using `acf.do_action('append', ...)`.
+    *   Intercept the form's `submit` event.
+    *   Use the localized AJAX URL for the request.
+    *   Find the nonce using a robust attribute selector (`input[name="_wpnonce"]`) within the ACF wrapper.
+    *   Use jQuery's `.serialize()` method to collect all field data reliably.
+    *   On successful AJAX save, programmatically re-submit the main Tribe Events form.
 
 ## Failed Approaches (and why they failed)
 
-1.  **Manual AJAX Data Collection & `setInterval`:**
-    *   **Problem:** The previous JavaScript implementation attempted to manually iterate over ACF fields to build a data object and used `setInterval` to find the form. This was unreliable.
-    *   **Reason for failure:** Manual data collection is error-prone and often fails to correctly format data for complex fields (like Relationship or Repeater fields). `setInterval` is not ideal for DOM readiness checks and can lead to race conditions or performance issues. The script often failed to find the ACF wrapper or the form at the right time.
+1.  **Incorrect AJAX URL (`ajaxurl`):**
+    *   **Problem:** Form submission resulted in a `403 Forbidden` error.
+    *   **Reason for failure:** The global `ajaxurl` JavaScript variable is not always available on the frontend in WordPress. The AJAX request was being sent to an incorrect URL, causing the server to reject it. The fix was to use `wp_localize_script` in PHP to provide the correct URL.
 
-2.  **Adding `acf_save_post()` hooks directly to `functions.php` in the child theme:**
-    *   **Problem:** Initially caused a PHP parse error due to a syntax mistake. After correction, ACF data still did not save, and debug logs showed "The provided input is not a valid Event type."
-    *   **Reason for failure:** This approach conflicted with The Events Calendar Community Events' internal saving mechanisms, as `acf_save_post()` was being called at an inappropriate time or with an invalid post ID in the context of the event submission.
+2.  **Incorrect Form Selector in JS:**
+    *   **Problem:** ACF fields were rendered in the DOM but were not visible on the form. Console logs showed that the JavaScript could not find the Tribe Events form.
+    *   **Reason for failure:** The selectors used to find the form (`form[name="tribe-community-event"]` and later `form#tribe-community-events-form`) were too specific and incorrect. The form's ID and name attributes were not stable or predictable. The fix was to use a more general selector (`.tribe-community-events form`) which successfully identified the form within its container.
 
-3.  **Directly embedding `acf_form_data()` and `acf_form()` calls within the `edit-event.php` template override:**
-    *   **Problem:** ACF fields either disappeared, were duplicated, or, when visible, their data was not saved (`$_POST['acf']` was empty). In some instances, the base event itself failed to save.
-    *   **Reason for failure:** Incorrect placement of ACF form elements within the complex HTML structure of the Tribe Events form. ACF's hidden inputs (`acf_form_data()`) and field rendering (`acf_form()`) need to be precisely positioned within the main `<form>` tags to ensure their data is included in the submission. Also, a critical `post_ID` input was inadvertently removed during template modifications, preventing the base event from saving.
+3.  **Polling with `setInterval` / `setTimeout`:**
+    *   **Problem:** The initial JavaScript implementation used polling to check for the existence of the form, which was unreliable and led to timeout errors.
+    *   **Reason for failure:** The Tribe Events form is rendered dynamically, and its appearance in the DOM was not predictable. Polling is inefficient and prone to race conditions. The fix was to use a `MutationObserver` to react instantly when the form is added to the DOM.
 
-4.  **Using the `output_acf_fields()` function within the plugin, hooked to `tribe_events_community_form`:**
-    *   **Problem:** ACF fields were not showing, and debug logs indicated that the `output_acf_fields` function was not being called.
-    *   **Reason for failure:** The `tribe_events_community_form` hook, while seemingly appropriate, fires at a point in the template rendering process where ACF's output might be overwritten or not correctly integrated into the final HTML form structure. There were also issues with repeatedly adding and removing this hook, leading to inconsistent states.
+4.  **Manual AJAX Data Collection:**
+    *   **Problem:** An early version of the script attempted to manually iterate over ACF fields to build a data object for AJAX submission.
+    *   **Reason for failure:** Manual data collection is error-prone and often fails to correctly format data for complex fields (like Relationship or Repeater fields). The fix was to use jQuery's `.serialize()` method, which is much more reliable.
 
-5.  **Attempting to load ACF scripts via `init` or `wp_enqueue_scripts` hooks without specific page targeting:**
-    *   **Problem:** ACF fields appeared as containers but were not populated with selectable options.
-    *   **Reason for failure:** The `acf_form_head()` function, which enqueues necessary ACF scripts and styles, was not being called at the correct time or on the correct page context, preventing the ACF JavaScript from initializing the fields properly.
-
-6.  **Duplicate `do_action` call in child theme's `edit-event.php` template override:**
-    *   **Problem:** ACF fields were displayed twice on the page; one instance had selectable options, the other did not.
-    *   **Reason for failure:** The child theme's template was directly calling `do_action('tribe_events_community_form_before_template')` and also manually rendering ACF fields, leading to a redundant output of the ACF form elements.
-
-7.  **Hooking `output_acf_fields` to `tec_events_community_form_after_module_description`:**
-    *   **Problem:** ACF fields did not show up.
-    *   **Reason for failure:** This hook, while inside the form, did not reliably render the ACF fields, possibly due to dynamic rendering or conflicts with Tribe Events' JavaScript.
-
-8.  **Calling `acf_form_head()` directly within `output_acf_fields` when hooked to `tec_events_community_form_after_module_description`:**
-    *   **Problem:** ACF fields did not show up, and sometimes caused critical errors.
-    *   **Reason for failure:** Similar to the above, the hook might not be suitable, or the timing of `acf_form_head()` was still incorrect in that specific context.
-
-9.  **Directly modifying `edit-event.php` in the plugin directory to include `acf_form_head()` and `Tribe_ACF_Frontend::output_acf_fields()`:**
-    *   **Problem:** ACF fields did not show up, and debug logs were empty.
-    *   **Reason for failure:** The plugin's `edit-event.php` was not the active template due to a theme override.
-
-10. **Directly modifying `edit-event.php` in the theme directory to include `acf_form_head()` and `Tribe_ACF_Frontend::output_acf_fields()`:**
-    *   **Problem:** ACF fields did not show up, and sometimes caused critical errors.
-    *   **Reason for failure:** Even with the correct template, the direct insertion of `acf_form_head()` and `acf_form()` might conflict with Tribe Events' JavaScript-driven form rendering, or the `output_acf_fields` function itself is not being called correctly in this context.
-
-11. **Adding debug logs to `init_acf_form_head()` and `output_acf_fields()`:**
-    *   **Problem:** Debug logs were empty when ACF fields were not showing.
-    *   **Reason for failure:** Confirmed that the functions were not being called, indicating the template being modified was not the active one, or the hooks were not firing.
+5.  **Incorrect `acf_form_head()` Hooking:**
+    *   **Problem:** ACF fields like Select2 and Date Pickers were not initializing correctly.
+    *   **Reason for failure:** `acf_form_head()` was being called too late in the page load. The fix was to move it to the `wp_head` action to ensure all necessary scripts and styles are loaded in the HTML `<head>`.
