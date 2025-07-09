@@ -97,8 +97,8 @@ jQuery(document).ready(function($) {
                     // Re-enable button and allow original form submission
                     $form.find('input[type="submit"]').prop('disabled', false);
                     
-                    // Let the original form submission complete naturally
-                    $form.off('submit', handleFormSubmit).trigger('submit');
+                    // Refresh the page to show Tribe's success message
+                    window.location.reload();
                 } else {
                     console.error('Tribe ACF Frontend AJAX: Error -', response.data.message);
                     alert('Error saving custom fields: ' + response.data.message);
