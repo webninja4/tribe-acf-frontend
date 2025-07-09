@@ -48,7 +48,10 @@ class Tribe_ACF_Frontend {
             wp_localize_script(
                 'tribe-acf-frontend-js',
                 'tribe_acf_frontend_ajax',
-                array( 'ajax_url' => admin_url( 'admin-ajax.php' ) )
+                array( 
+                    'ajax_url' => admin_url( 'admin-ajax.php' ),
+                    'redirect_url' => tribe_community_events_events_list_url()
+                )
             );
         }
     }
@@ -132,7 +135,7 @@ class Tribe_ACF_Frontend {
             'post_id'       => $post_id,
             'field_groups'  => array(), // ACF will automatically detect field groups assigned to 'tribe_events'.
             'form'          => false,   // Do not wrap in a <form> tag, as Community Events provides its own.
-            'return'        => tribe_community_events_edit_event_link(), // Use Tribe's canonical edit URL
+            'return'        => tribe_community_events_events_list_url(), // Redirect to the member events list after submission
             'html_before_fields' => '',
             'html_after_fields'  => '',
             'submit_value'  => __( 'Update Event', 'tribe-acf-frontend' ), // This won't be used as 'form' is false.
@@ -172,7 +175,10 @@ class Tribe_ACF_Frontend {
 
         // Save ACF fields. acf_save_post() will use the $_POST['acf'] data.
         if ( acf_save_post( $post_id ) ) {
-            wp_send_json_success( array( 'message' => 'ACF fields saved successfully.' ) );
+            wp_send_json_success( array( 
+                'message' => 'ACF fields saved successfully.',
+                'redirect_url' => tribe_community_events_events_list_url()
+            ) );
         } else {
             wp_send_json_error( array( 'message' => 'Failed to save ACF fields.' ) );
         }
