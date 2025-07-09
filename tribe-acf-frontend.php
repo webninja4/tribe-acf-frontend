@@ -152,8 +152,8 @@ class Tribe_ACF_Frontend {
      * AJAX handler for saving ACF fields.
      */
     public function ajax_save_acf_community_event() {
-        // Verify nonce for security using ACF's nonce system
-        if (!check_ajax_referer( 'acf_form', '_acf_nonce', false )) {
+        // Verify nonce for security using ACF frontend form nonce
+        if (!check_ajax_referer( 'acf_nonce', '_acf_nonce', false )) {
             wp_send_json_error( array( 'message' => 'Security verification failed.' ) );
         }
 
@@ -173,19 +173,27 @@ class Tribe_ACF_Frontend {
         // Save ACF fields first
         $acf_saved = acf_save_post( $post_id );
         
-        // Then save the main event data by mimicking Tribe's form submission
+        // Save ACF fields and return response
         if ($acf_saved) {
-            // Get the Community Events instance and process the form
-            $community_events = Tribe__Events__Community__Main::instance();
-            $community_events->doSubmit();
-            
+            // Get correct redirect URL
+            $redirect_url = function_exists('tribe_community_events_edit_event_link') 
+                ? tribe_community_events_edit_event_link($post_id)
+                : get_permalink($post_id);
+
+            // Handle new posts that might not be published yet
+            if ($post_id === 'new_post') {
+                $post_id = acf_get_valid_post_id($post_id);
+                $redirect_url = add_query_arg('eventDate', time(), $redirect_url);
+            }
+
             wp_send_json_success( array( 
-                'message' => 'Event saved successfully.',
-                'redirect_url' => get_permalink($post_id)
+                'message' => 'ACF fields saved successfully.',
+                'redirect_url' => $redirect_url,
+                'post_id' => $post_id
             ) );
         }
         
-        wp_send_json_error( array( 'message' => 'Failed to save event data.' ) );
+        wp_send_json_error( array( 'message' => 'Failed to save ACF fields.' ) );
     }
 }
 
