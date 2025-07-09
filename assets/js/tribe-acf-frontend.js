@@ -81,7 +81,7 @@ jQuery(document).ready(function($) {
         console.log('Tribe ACF Frontend SUBMIT: Serialized ACF Data:', acfData);
 
         const data = 'action=save_acf_community_event' +
-                     '&_wpnonce=' + nonce +
+                     '&_acf_nonce=' + nonce +
                      '&post_id=' + postId +
                      '&' + acfData;
 
