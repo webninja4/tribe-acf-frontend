@@ -1,0 +1,27 @@
+{
+  "name": "tribe-acf-frontend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test-frontend.js",
+    "test:gemini": "node gemini-frontend-tester.js",
+    "test:quick": "node quick-test.js",
+    "test:flexible": "node flexible-test.js",
+    "screenshot": "node flexible-test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webninja4/tribe-acf-frontend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/webninja4/tribe-acf-frontend/issues"
+  },
+  "homepage": "https://github.com/webninja4/tribe-acf-frontend#readme",
+  "description": "",
+  "dependencies": {
+    "playwright": "^1.53.2"
+  }
+}
