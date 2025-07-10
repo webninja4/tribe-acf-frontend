@@ -4,8 +4,8 @@
  * Plugin URI:  https://github.com/webninja4/tribe-acf-frontend
  * Description: Integrates Advanced Custom Fields (ACF) with The Events Calendar Community Events frontend submission form.
  * Version:     1.0.0
- * Author:      Paul
- * Author URI:  https://webninja.com
+ * Author:      Paul Steele | Project A, Inc.
+ * Author URI:  https://projecta.com
  * License:     GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: tribe-acf-frontend
