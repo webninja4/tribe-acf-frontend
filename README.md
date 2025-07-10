@@ -6,8 +6,8 @@ Version:     1.0.0
 Requires at least: 5.0
 Tested up to: 6.5.2
 Requires PHP: 7.4
-Author:      Paul Steele
-Author URI:  https://projecta.Custom
+Author:      Paul Steele | Project A, Inc.
+Author URI:  https://projecta.com
 License:     GPL-2.0+
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 Text Domain: tribe-acf-frontend
